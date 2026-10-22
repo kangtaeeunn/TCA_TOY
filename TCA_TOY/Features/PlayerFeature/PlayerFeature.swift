@@ -24,10 +24,6 @@ struct PlayerFeature {
         case failed(reason: String)
     }
     
-    enum Destination: Equatable {
-        case alert(AlertState<Action>)
-    }
-    
     @ObservableState
     struct State: Equatable {
         var tracks: IdentifiedArrayOf<TrackState> = []
@@ -38,8 +34,51 @@ struct PlayerFeature {
         var soloTrackID: SessionID?
         var recordingPhase: RecordingPhase = .idle
         var recordingTarget: RecordingTarget?
-        @Presents var destination: Destination?
+        @Presents var destination: Destination.State?
     }
     
     @Dependency(\.audioClient) var audioClient
+    
+    enum Action: Equatable {
+        case task
+        case playPauseTapped
+        case seekChanged(time: TimeInterval)
+        case volumeChanged(trackID: SessionID, volume: Float)
+        case muteTapped(trackID: SessionID)
+        case soloTapped(trackID: SessionID)
+        case pinDraftStarted(trackID: SessionID)
+        case startPointSetTapped(time: TimeInterval)
+        case endPointSetTapped(time: TimeInterval)
+        case originalSelected(trackID: SessionID, range: ClosedRange<TimeInterval>)
+        case songLoaded(Song)
+        case loadResponse(duration: TimeInterval)
+        case loadFailureResponse(reason: String)
+        case patchesChanged
+        case recordTapped(SessionID?)
+        case recordCancelTapped
+        case audioEvent(AudioEvent)
+        case countInTicked
+        case countInFinished
+        case recordingRangeEnded
+        case recordingResponse(fileURL: URL)
+        case recordingFailureResponse(reason: String)
+        case destination(PresentationAction<Destination.Action>)
+        enum Alert: Equatable {
+            
+        }
+        
+        case delegate(Delegate)
+        enum Delegate: Equatable {
+            case recordingFinished(target: RecordingTarget, fileURL: URL)
+        }
+    }
 }
+
+extension PlayerFeature {
+    @Reducer
+    enum Destination {
+        case alert(AlertState<PlayerFeature.Action.Alert>)
+    }
+}
+extension PlayerFeature.Destination.State: Equatable {}
+extension PlayerFeature.Destination.Action: Equatable {}
